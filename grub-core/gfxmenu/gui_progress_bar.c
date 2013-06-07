@@ -336,7 +336,7 @@ progress_bar_set_property (void *vself, const char *name, const char *value)
       grub_free (self->template);
       if (grub_strcmp (value, "@TIMEOUT_NOTIFICATION_LONG@") == 0)
 	value 
-	  = _("The highlighted entry will be executed automatically in %ds.");
+	  = _("The selected entry will be started automatically in %ds.");
       else if (grub_strcmp (value, "@TIMEOUT_NOTIFICATION_MIDDLE@") == 0)
 	/* TRANSLATORS:  's' stands for seconds.
 	   It's a standalone timeout notification.
