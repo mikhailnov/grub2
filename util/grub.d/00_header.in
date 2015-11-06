@@ -263,7 +263,8 @@ EOF
 set theme=(\$root)`make_system_path_relative_to_its_root $GRUB_THEME`
 export theme
 EOF
-    elif [ "x$GRUB_BACKGROUND" != x ] && [ -f "$GRUB_BACKGROUND" ] \
+    fi
+    if [ "x$GRUB_BACKGROUND" != x ] && [ -f "$GRUB_BACKGROUND" ] \
 	    && is_path_readable_by_grub "$GRUB_BACKGROUND"; then
 	gettext_printf "Found background: %s\n" "$GRUB_BACKGROUND" >&2
 	case "$GRUB_BACKGROUND" in 
