@@ -76,6 +76,12 @@ image_paint (void *vself, const grub_video_rect_t *region)
   if (!grub_video_have_common_points (region, &self->bounds))
     return;
 
+#if !defined (GRUB_MACHINE_EFI)
+  /* Special case for UEFI logo: do not draw it in BIOS mode */
+  if (grub_strcmp (self->id, "__uefi__") == 0)
+    return;
+#endif
+
   grub_gui_set_viewport (&self->bounds, &vpsave);
   grub_video_blit_bitmap (self->bitmap, GRUB_VIDEO_BLIT_BLEND,
                           0, 0, 0, 0,
