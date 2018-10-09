@@ -79,6 +79,7 @@ static char *label_color;
 static char *label_bgcolor;
 static char *product_version;
 static int add_rs_codes = 1;
+static int uefi_secure_boot = 1;
 
 enum
   {
@@ -109,7 +110,9 @@ enum
     OPTION_LABEL_FONT,
     OPTION_LABEL_COLOR,
     OPTION_LABEL_BGCOLOR,
-    OPTION_PRODUCT_VERSION
+    OPTION_PRODUCT_VERSION,
+    OPTION_UEFI_SECURE_BOOT,
+    OPTION_NO_UEFI_SECURE_BOOT
   };
 
 static int fs_probe = 1;
@@ -233,6 +236,14 @@ argp_parser (int key, char *arg, struct argp_state *state)
       bootloader_id = xstrdup (arg);
       return 0;
 
+    case OPTION_UEFI_SECURE_BOOT:
+      uefi_secure_boot = 1;
+      return 0;
+
+    case OPTION_NO_UEFI_SECURE_BOOT:
+      uefi_secure_boot = 0;
+      return 0;
+
     case ARGP_KEY_ARG:
       if (install_device)
 	grub_util_error ("%s", _("More than one install device?"));
@@ -302,6 +313,13 @@ static struct argp_option options[] = {
   {"label-color", OPTION_LABEL_COLOR, N_("COLOR"), 0, N_("use COLOR for label"), 2},
   {"label-bgcolor", OPTION_LABEL_BGCOLOR, N_("COLOR"), 0, N_("use COLOR for label background"), 2},
   {"product-version", OPTION_PRODUCT_VERSION, N_("STRING"), 0, N_("use STRING as product version"), 2},
+  {"uefi-secure-boot", OPTION_UEFI_SECURE_BOOT, 0, 0,
+   N_("install an image usable with UEFI Secure Boot. "
+      "This option is only available on EFI."), 2},
+  {"no-uefi-secure-boot", OPTION_NO_UEFI_SECURE_BOOT, 0, 0,
+   N_("do not install an image usable with UEFI Secure Boot, even if the "
+      "system was currently started using it. "
+      "This option is only available on EFI."), 2},
   {0, 0, 0, 0, 0, 0}
 };
 
@@ -824,7 +842,8 @@ main (int argc, char *argv[])
 {
   int is_efi = 0;
   const char *efi_distributor = NULL;
-  const char *efi_file = NULL;
+  const char *efi_suffix = NULL, *efi_suffix_boot = NULL;
+  char *efi_file = NULL;
   char **grub_devices;
   grub_fs_t grub_fs;
   grub_device_t grub_dev = NULL;
@@ -1094,6 +1113,38 @@ main (int argc, char *argv[])
       */
       char *t;
       efi_distributor = bootloader_id;
+      switch (platform)
+	{
+	case GRUB_INSTALL_PLATFORM_I386_EFI:
+	  efi_suffix = "ia32";
+	  efi_suffix_boot = "IA32";
+	  break;
+	case GRUB_INSTALL_PLATFORM_X86_64_EFI:
+	  efi_suffix = "x64";
+	  /*
+	   * BOOT*.EFI also uses lovercase 'x' on x86_64. Should not matter
+	   * much on FAT FS, but it is better to stick to the spec.
+	   * UEFI Specification version 2.7 errata A, section 3.5.1.1
+	   * "Removable Media Boot Behavior", Table 14 - "UEFI Image Types"
+	   * lists "BOOTx64.EFI" as a file name convention for x64.
+	   */
+	  efi_suffix_boot = "x64";
+	  break;
+	case GRUB_INSTALL_PLATFORM_IA64_EFI:
+	  efi_suffix = "ia64";
+	  efi_suffix_boot = "IA64";
+	  break;
+	case GRUB_INSTALL_PLATFORM_ARM_EFI:
+	  efi_suffix = "arm";
+	  efi_suffix_boot = "ARM";
+	  break;
+	case GRUB_INSTALL_PLATFORM_ARM64_EFI:
+	  efi_suffix = "aa64";
+	  efi_suffix_boot = "AA64";
+	  break;
+	default:
+	  break;
+	}
       if (removable)
 	{
 	  /* The specification makes stricter requirements of removable
@@ -1102,66 +1153,16 @@ main (int argc, char *argv[])
 	     must have a specific file name depending on the architecture.
 	  */
 	  efi_distributor = "BOOT";
-	  switch (platform)
-	    {
-	    case GRUB_INSTALL_PLATFORM_I386_EFI:
-	      efi_file = "BOOTIA32.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_X86_64_EFI:
-	      efi_file = "BOOTX64.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_IA64_EFI:
-	      efi_file = "BOOTIA64.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_ARM_EFI:
-	      efi_file = "BOOTARM.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_ARM64_EFI:
-	      efi_file = "BOOTAA64.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_RISCV32_EFI:
-	      efi_file = "BOOTRISCV32.EFI";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_RISCV64_EFI:
-	      efi_file = "BOOTRISCV64.EFI";
-	      break;
-	    default:
-	      grub_util_error ("%s", _("You've found a bug"));
-	      break;
-	    }
+          if (!efi_suffix)
+            grub_util_error ("%s", _("You've found a bug"));
+          efi_file = xasprintf ("BOOT%s.EFI", efi_suffix_boot);
 	}
       else
 	{
 	  /* It is convenient for each architecture to have a different
 	     efi_file, so that different versions can be installed in parallel.
 	  */
-	  switch (platform)
-	    {
-	    case GRUB_INSTALL_PLATFORM_I386_EFI:
-	      efi_file = "grubia32.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_X86_64_EFI:
-	      efi_file = "grubx64.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_IA64_EFI:
-	      efi_file = "grubia64.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_ARM_EFI:
-	      efi_file = "grubarm.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_ARM64_EFI:
-	      efi_file = "grubaa64.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_RISCV32_EFI:
-	      efi_file = "grubriscv32.efi";
-	      break;
-	    case GRUB_INSTALL_PLATFORM_RISCV64_EFI:
-	      efi_file = "grubriscv64.efi";
-	      break;
-	    default:
-	      efi_file = "grub.efi";
-	      break;
-	    }
+	  efi_file = xasprintf ("grub%s.efi", efi_suffix);
 	}
       t = grub_util_path_concat (3, efidir, "EFI", efi_distributor);
       free (efidir);
@@ -1367,14 +1368,36 @@ main (int argc, char *argv[])
 	}
     }
 
-  if (!have_abstractions)
+  char *efi_signed = NULL;
+  switch (platform)
+    {
+    case GRUB_INSTALL_PLATFORM_I386_EFI:
+    case GRUB_INSTALL_PLATFORM_X86_64_EFI:
+    case GRUB_INSTALL_PLATFORM_ARM_EFI:
+    case GRUB_INSTALL_PLATFORM_ARM64_EFI:
+    case GRUB_INSTALL_PLATFORM_IA64_EFI:
+      {
+	efi_signed = grub_util_path_concat (3, efidir, "grub2-efi",
+					    (removable ? "grubcd.efi" : "grub.efi"));
+	break;
+      }
+
+    default:
+      break;
+    }
+
+  if (!efi_signed || !grub_util_is_regular (efi_signed))
+    uefi_secure_boot = 0;
+
+  if (!have_abstractions || uefi_secure_boot)
     {
       if ((disk_module && grub_strcmp (disk_module, "biosdisk") != 0)
 	  || grub_drives[1]
 	  || (!install_drive
 	      && platform != GRUB_INSTALL_PLATFORM_POWERPC_IEEE1275)
 	  || (install_drive && !is_same_disk (grub_drives[0], install_drive))
-	  || !have_bootdev (platform))
+	  || !have_bootdev (platform)
+	  || uefi_secure_boot)
 	{
 	  char *uuid = NULL;
 	  /*  generic method (used on coreboot and ata mod).  */
@@ -1902,7 +1925,51 @@ main (int argc, char *argv[])
     case GRUB_INSTALL_PLATFORM_IA64_EFI:
       {
 	char *dst = grub_util_path_concat (2, efidir, efi_file);
-	grub_install_copy_file (imgfile, dst, 1);
+	if (uefi_secure_boot)
+	  {
+	    char *shim_name = NULL;
+	    char *shim_file = NULL;
+	    char *config_dst;
+	    FILE *config_dst_f;
+
+	    shim_name = xasprintf ("BOOT%s.EFI", efi_suffix_boot);
+	    shim_file = grub_util_path_concat (2, efidir, shim_name);
+
+	    if (shim_file && grub_util_is_regular (shim_file))
+	      {
+		char *chained_base, *chained_dst;
+
+		/* Install grub as our chained bootloader */
+		chained_base = xasprintf ("grub%s.efi", efi_suffix);
+		chained_dst = grub_util_path_concat (2, efidir, chained_base);
+		grub_install_copy_file (efi_signed, chained_dst, 1);
+		free (chained_dst);
+		free (chained_base);
+
+		/* Now handle shim, and make this our new "default" loader. */
+		if (!removable)
+		  {
+		    free (efi_file);
+		    efi_file = xstrdup (shim_name);
+		    free (dst);
+		    dst = grub_util_path_concat (2, efidir, efi_file);
+		  }
+	      }
+	    else
+	      grub_install_copy_file (efi_signed, dst, 1);
+
+	    free (shim_name);
+	    free (shim_file);
+
+	    config_dst = grub_util_path_concat (2, efidir, "grub.cfg");
+	    grub_install_copy_file (load_cfg, config_dst, 1);
+	    config_dst_f = grub_util_fopen (config_dst, "ab");
+	    fprintf (config_dst_f, "configfile $prefix/grub.cfg\n");
+	    fclose (config_dst_f);
+	    free (config_dst);
+	  }
+	else
+	  grub_install_copy_file (imgfile, dst, 1);
 	free (dst);
       }
       if (!removable && update_nvram)
@@ -1953,6 +2020,8 @@ main (int argc, char *argv[])
     case GRUB_INSTALL_PLATFORM_MAX:
       break;
     }
+
+  free (efi_signed);
 
   fprintf (stderr, "%s\n", _("Installation finished. No error reported."));
 
