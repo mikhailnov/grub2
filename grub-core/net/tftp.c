@@ -323,9 +323,9 @@ tftp_open (struct grub_file *file, const char *filename)
   rrqlen += grub_strlen ("blksize") + 1;
   rrq += grub_strlen ("blksize") + 1;
 
-  grub_strcpy (rrq, "1024");
-  rrqlen += grub_strlen ("1024") + 1;
-  rrq += grub_strlen ("1024") + 1;
+  grub_strcpy (rrq, "1428");
+  rrqlen += grub_strlen ("1428") + 1;
+  rrq += grub_strlen ("1428") + 1;
 
   grub_strcpy (rrq, "tsize");
   rrqlen += grub_strlen ("tsize") + 1;
