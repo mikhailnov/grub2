@@ -84,7 +84,7 @@ for drv in $drives ; do
 
   gettext_printf "Found %s on %s (%s)\n" "$OS" "$drv" "$dev" >&2
   cat << EOF
-menuentry '$(echo "$OS" | grub_quote)' \$menuentry_id_option '$osid-$(grub_get_device_id "${dev}")' {
+menuentry ${unrestricted}'$(echo "$OS" | grub_quote)' \$menuentry_id_option '$osid-$(grub_get_device_id "${dev}")' {
 EOF
 
   save_default_entry | sed -e 's,^,$grub_tab,'

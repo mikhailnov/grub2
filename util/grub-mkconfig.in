@@ -239,7 +239,14 @@ export GRUB_DEFAULT \
   GRUB_ENABLE_CRYPTODISK \
   GRUB_BADRAM \
   GRUB_OS_PROBER_SKIP_LIST \
-  GRUB_DISABLE_SUBMENU
+  GRUB_DISABLE_SUBMENU \
+  GRUB_PASSWORD_PROTECT_ONLY_EDITING
+
+if [ "x${GRUB_PASSWORD_PROTECT_ONLY_EDITING}" = "xtrue" ]
+  then unrestricted="--unrestricted "
+  else unrestricted=" "
+fi
+export unrestricted
 
 if test "x${grub_cfg}" != "x"; then
   rm -f "${grub_cfg}.new"

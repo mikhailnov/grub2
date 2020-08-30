@@ -60,7 +60,7 @@ osx_entry() {
     # TRANSLATORS: it refers on the OS residing on device %s
     onstr="$(gettext_printf "(on %s)" "${DEVICE}")"
         cat << EOF
-menuentry '$(echo "${LONGNAME} $bitstr $onstr" | grub_quote)' --class osx --class darwin --class os \$menuentry_id_option 'osprober-xnu-$2-$(grub_get_device_id "${DEVICE}")'  {
+menuentry ${unrestricted}'$(echo "${LONGNAME} $bitstr $onstr" | grub_quote)' --class osx --class darwin --class os \$menuentry_id_option 'osprober-xnu-$2-$(grub_get_device_id "${DEVICE}")'  {
 EOF
 	save_default_entry | grub_add_tab
 	prepare_grub_to_access_device ${DEVICE} | grub_add_tab
@@ -158,7 +158,7 @@ for OS in ${OSPROBED} ; do
 
 	  onstr="$(gettext_printf "(on %s)" "${DEVICE#/dev/}")"
       cat << EOF
-menuentry '$(echo "${LONGNAME} $onstr" | grub_quote)' $CLASS --class os \$menuentry_id_option 'osprober-chain-$(grub_get_device_id "${DEVICE}")' {
+menuentry ${unrestricted}'$(echo "${LONGNAME} $onstr" | grub_quote)' $CLASS --class os \$menuentry_id_option 'osprober-chain-$(grub_get_device_id "${DEVICE}")' {
 EOF
       save_default_entry | grub_add_tab
       prepare_grub_to_access_device ${DEVICE} | grub_add_tab
@@ -190,7 +190,7 @@ EOF
 	DEVICE=${DEVICE%@*}
 	onstr="$(gettext_printf "(on %s)" "${DEVICE}")"
       cat << EOF
-menuentry '$(echo "${LONGNAME} $onstr" | grub_quote)' $CLASS --class os \$menuentry_id_option 'osprober-efi-$(grub_get_device_id "${DEVICE}")' {
+menuentry ${unrestricted}'$(echo "${LONGNAME} $onstr" | grub_quote)' $CLASS --class os \$menuentry_id_option 'osprober-efi-$(grub_get_device_id "${DEVICE}")' {
 EOF
       save_default_entry | sed -e "s/^/\t/"
       prepare_grub_to_access_device ${DEVICE} | sed -e "s/^/\t/"
@@ -315,7 +315,7 @@ $(save_default_entry | sed -e "s/^/\t/"; add_options; printf '%s\n' "${prepare_b
 
 	if [ "x$is_top_level" = xtrue ] && [ "x${GRUB_DISABLE_SUBMENU}" != xy ]; then
             cat << EOF
-menuentry '$(echo "$title $onstr" | grub_quote)' $CLASS --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-simple-$boot_device_id' {
+menuentry ${unrestricted}'$(echo "$title $onstr" | grub_quote)' $CLASS --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-simple-$boot_device_id' {
 EOF
 	    save_default_entry | grub_add_tab
 	    add_options
@@ -333,7 +333,7 @@ EOF
         cat << EOF
 }
 EOF
-	    echo "submenu '$(gettext_printf "Advanced options for %s" "${title} $onstr" | grub_quote)' \$menuentry_id_option 'osprober-gnulinux-advanced-$boot_device_id' {"
+	    echo "submenu ${unrestricted}'$(gettext_printf "Advanced options for %s" "${title} $onstr" | grub_quote)' \$menuentry_id_option 'osprober-gnulinux-advanced-$boot_device_id' {"
 	    is_top_level=false
 
 	    # If there are other entries in the list with absolutely the same kernel, parameters and initrd
@@ -350,7 +350,7 @@ EOF
 	fi
 
         cat << EOF
-	menuentry '$(echo "$title $onstr" | grub_quote)' --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-$LKERNEL-${recovery_params}-$boot_device_id' {
+	menuentry ${unrestricted}'$(echo "$title $onstr" | grub_quote)' --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-$LKERNEL-${recovery_params}-$boot_device_id' {
 EOF
 	save_default_entry | sed -e "s/^/$grub_tab$grub_tab/"
 	add_options
@@ -390,7 +390,7 @@ EOF
     hurd)
       onstr="$(gettext_printf "(on %s)" "${DEVICE#/dev/}")"
       cat << EOF
-menuentry '$(echo "${LONGNAME} $onstr" | grub_quote)' --class hurd --class gnu --class os \$menuentry_id_option 'osprober-gnuhurd-/boot/gnumach.gz-false-$(grub_get_device_id "${DEVICE}")' {
+menuentry ${unrestricted}'$(echo "${LONGNAME} $onstr" | grub_quote)' --class hurd --class gnu --class os \$menuentry_id_option 'osprober-gnuhurd-/boot/gnumach.gz-false-$(grub_get_device_id "${DEVICE}")' {
 EOF
       save_default_entry | grub_add_tab
       prepare_grub_to_access_device ${DEVICE} | grub_add_tab
@@ -415,7 +415,7 @@ EOF
     ;;
     minix)
 	  cat << EOF
-menuentry "${LONGNAME} (on ${DEVICE}, Multiboot)" {
+menuentry ${unrestricted}"${LONGNAME} (on ${DEVICE}, Multiboot)" {
 EOF
          save_default_entry | sed -e "s/^/\t/"
          prepare_grub_to_access_device ${DEVICE} | sed -e "s/^/\t/"
@@ -428,7 +428,7 @@ EOF
       case ${DEVICE} in
 	*.efi)
 	  cat << EOF
-menuentry '$(echo "${LONGNAME}" | grub_quote)' {
+menuentry ${unrestricted}'$(echo "${LONGNAME}" | grub_quote)' {
 EOF
 	  save_default_entry | grub_add_tab
 	  cat << EOF

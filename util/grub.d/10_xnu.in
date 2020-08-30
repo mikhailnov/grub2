@@ -37,7 +37,7 @@ osx_entry() {
     # TRANSLATORS: it refers on the OS residing on device %s
     onstr="$(gettext_printf "(on %s)" "${GRUB_DEVICE}")"
         cat << EOF
-menuentry '$(echo "Darwin/Mac OS X $bitstr $onstr" | grub_quote)' --class osx --class darwin --class os \$menuentry_id_option 'osprober-xnu-$2-$(grub_get_device_id "${GRUB_DEVICE}")'  {
+menuentry ${unrestricted}'$(echo "Darwin/Mac OS X $bitstr $onstr" | grub_quote)' --class osx --class darwin --class os \$menuentry_id_option 'osprober-xnu-$2-$(grub_get_device_id "${GRUB_DEVICE}")'  {
 EOF
 	save_default_entry | grub_add_tab
 	prepare_grub_to_access_device ${GRUB_DEVICE} | grub_add_tab
