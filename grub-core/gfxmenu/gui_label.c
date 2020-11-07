@@ -25,6 +25,11 @@
 #include <grub/i18n.h>
 #include <grub/color.h>
 
+#define LABEL_ENTER "Boot entry     "
+#define LABEL_E     "Edit entry     "
+#define LABEL_C     "Console     "
+#define LABEL_ESC   "Back"
+
 static const char *align_options[] =
 {
   "left",
@@ -192,7 +197,14 @@ label_set_property (void *vself, const char *name, const char *value)
 	       "or `c' for a command-line.");
 	   else if (grub_strcmp (value, "@KEYMAP_SHORT@") == 0)
 	    value = _("enter: boot, `e': options, `c': cmd-line");
-	   /* FIXME: Add more templates here if needed.  */
+	   else if (grub_strcmp (value, LABEL_ENTER) == 0)
+	    value = _(LABEL_ENTER);
+	   else if (grub_strcmp (value, LABEL_E) == 0)
+	    value = _(LABEL_E);
+	   else if (grub_strcmp (value, LABEL_C) == 0)
+	    value = _(LABEL_C);
+	   else if (grub_strcmp (value, LABEL_ESC) == 0)
+	    value = _(LABEL_ESC);
 	  self->template = grub_strdup (value);
 	  self->text = grub_xasprintf (value, self->value);
 	}
