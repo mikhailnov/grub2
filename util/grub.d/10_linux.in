@@ -138,10 +138,24 @@ linux_entry ()
     fi
     printf '%s\n' "${prepare_boot_cache}" | sed "s/^/$submenu_indentation/"
   fi
+
+  PRIMARY_SWAP=$(/sbin/swapon --show="PRIO,NAME,TYPE" --noheading | sort -nr | head -n 1)
+  SWAP_TYPE=$(echo $PRIMARY_SWAP | awk '{print $3}')
+  SWAP_DEV=$(echo $PRIMARY_SWAP | awk '{print $2}')
+  if [ "x$SWAP_TYPE" = "xpartition" ]; then
+      RESUME_STRING="resume=UUID=$(/sbin/blkid -s UUID $SWAP_DEV | sed 's/.*="//;s/".*//')"
+  fi
+
+  if [ "x$SWAP_TYPE" = "xfile" ]; then
+      RESUME_OFFSET=$(filefrag -v $SWAP_DEV| grep -E '^\s+0:.* 0\.\.' | awk -F '[ \t:.]+' '{print $5}')
+      RESUME_DEV=$(/bin/df $SWAP_DEV | grep '/dev/\S*' -o)
+      RESUME_STRING="resume=UUID=$(/sbin/blkid -s UUID $RESUME_DEV | sed 's/.*="//;s/".*//') resume_offset=$RESUME_OFFSET"
+  fi
+
   message="$(gettext_printf "Loading Linux %s ..." ${version})"
   sed "s/^/$submenu_indentation/" << EOF
 	echo	'$(echo "$message" | grub_quote)'
-	linux	${rel_dirname}/${basename} root=${linux_root_device_thisversion} ro ${args}
+	linux	${rel_dirname}/${basename} root=${linux_root_device_thisversion} ro ${args} ${RESUME_STRING}
 EOF
   if test -n "${initrd}" ; then
     # TRANSLATORS: ramdisk isn't identifier. Should be translated.
