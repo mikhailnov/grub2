@@ -41,6 +41,14 @@ if [ -z "${OSPROBED}" ] ; then
   exit 0
 fi
 
+add_options() {
+  if [ "x$GRUB_GFXPAYLOAD_LINUX" != xtext ]; then
+    echo "        load_video" | sed "s/^/$submenu_indentation/"
+  fi
+  echo "        set gfxpayload=$GRUB_GFXPAYLOAD_LINUX" | sed "s/^/$submenu_indentation/"
+  echo "        insmod gzio" | sed "s/^/$submenu_indentation/"
+}
+
 osx_entry() {
     if [ x$2 = x32 ]; then
         # TRANSLATORS: it refers to kernel architecture (32-bit)
@@ -266,6 +274,7 @@ EOF
 menuentry '$(echo "$title $onstr" | grub_quote)' $CLASS --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-simple-$boot_device_id' {
 EOF
 	    save_default_entry | grub_add_tab
+	    add_options
 	    printf '%s\n' "${prepare_boot_cache}"
 	    cat <<  EOF
 	echo '$message_kernel'
@@ -300,6 +309,7 @@ EOF
 	menuentry '$(echo "$title $onstr" | grub_quote)' --class gnu-linux --class gnu --class os \$menuentry_id_option 'osprober-gnulinux-$LKERNEL-${recovery_params}-$boot_device_id' {
 EOF
 	save_default_entry | sed -e "s/^/$grub_tab$grub_tab/"
+	add_options
 	printf '%s\n' "${prepare_boot_cache}" | grub_add_tab
 	cat <<  EOF
 		echo '$message_kernel'
