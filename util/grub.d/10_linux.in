@@ -92,9 +92,9 @@ linux_entry ()
   if [ x$type != xsimple ] ; then
       case $type in
 	  recovery)
-	      title="$(gettext_printf "%s, with Linux %s (recovery mode)" "${os}" "${version}")" ;;
+	      title="$(gettext_printf "%s - Linux %s (recovery mode)" "${os}" "${version}")" ;;
 	  *)
-	      title="$(gettext_printf "%s, with Linux %s" "${os}" "${version}")" ;;
+	      title="$(gettext_printf "%s - Linux %s" "${os}" "${version}")" ;;
       esac
       if [ x"$title" = x"$GRUB_ACTUAL_DEFAULT" ] || [ x"Previous Linux versions>$title" = x"$GRUB_ACTUAL_DEFAULT" ]; then
 	  replacement_title="$(echo "Advanced options for ${OS}" | sed 's,>,>>,g')>$(echo "$title" | sed 's,>,>>,g')"
